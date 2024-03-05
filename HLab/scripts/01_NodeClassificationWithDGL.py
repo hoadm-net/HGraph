@@ -68,17 +68,11 @@ def train(g, model):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Node Classification with DGL')
-    parser.add_argument('-d', '--device', type=bool, default=False)
-
-    args = parser.parse_args()
-
-    print(args)
-    print(args.device)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
 
     print('Loading data...')
     dataset = dgl.data.CoraGraphDataset()
-    graph = dataset[0]
+    graph = dataset[0].to(device)
     print('-'*100)
 
     print('Traning')
@@ -86,11 +80,6 @@ if __name__ == '__main__':
         in_feats=graph.ndata["feat"].shape[1], 
         h_feats=16, 
         num_classes=dataset.num_classes
-    )
-
-    if args.device and torch.cuda.is_available():
-        print('Move to GPU..................')
-        graph = graph.to('cuda')
-        model = model.to('cuda')
+    ).to(device)
 
     train(graph, model)
