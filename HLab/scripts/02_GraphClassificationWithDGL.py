@@ -20,6 +20,7 @@ class GCN(nn.Module):
     def forward(self, g, in_feat):
         device = "cuda" if torch.cuda.is_available() else "cpu"
         g.to(device)
+        in_feat = in_feat.to(device)
 
         h = self.conv1(g, in_feat)
         h = F.relu(h)
