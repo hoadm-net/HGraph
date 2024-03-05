@@ -13,6 +13,8 @@ from dgl.nn.pytorch import GINConv, SumPooling
 import torch.multiprocessing as mp
 from dgl.data import GINDataset
 
+torch.multiprocessing.set_sharing_strategy('file_system')
+
 
 class GIN(nn.Module):
     def __init__(self, input_size=1, num_classes=2):
