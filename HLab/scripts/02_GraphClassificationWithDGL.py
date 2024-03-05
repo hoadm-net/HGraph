@@ -18,10 +18,6 @@ class GCN(nn.Module):
         self.conv2 = GraphConv(h_feats, num_classes)
 
     def forward(self, g, in_feat):
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        g.to(device)
-        in_feat = in_feat.to(device)
-
         h = self.conv1(g, in_feat)
         h = F.relu(h)
         h = self.conv2(g, h)
@@ -75,6 +71,7 @@ if __name__ == '__main__':
 
     for epoch in range(20):
         for batched_graph, labels in train_dataloader:
+            batched_graph.to(device)
             pred = model(batched_graph, batched_graph.ndata["attr"].float())
             loss = F.cross_entropy(pred, labels)
             optimizer.zero_grad()
