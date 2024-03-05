@@ -19,7 +19,7 @@ class GCN(nn.Module):
 
     def forward(self, g, in_feat):
         if torch.cuda.is_available():
-            g = g.to("gpu")
+            g = g.to("cuda")
 
         h = self.conv1(g, in_feat)
         h = F.relu(h)
