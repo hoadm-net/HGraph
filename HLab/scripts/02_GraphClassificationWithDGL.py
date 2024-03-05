@@ -71,9 +71,11 @@ if __name__ == '__main__':
 
     for epoch in range(20):
         for batched_graph, labels in train_dataloader:
-            batched_graph.to(device)
-            pred = model(batched_graph, batched_graph.ndata["attr"].float())
-            loss = F.cross_entropy(pred, labels)
+            graph = batched_graph.to(device)
+            lbl = labels.to(device)
+
+            pred = model(graph, graph.ndata["attr"].float())
+            loss = F.cross_entropy(pred, lbl)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -81,9 +83,11 @@ if __name__ == '__main__':
     num_correct = 0
     num_tests = 0
     for batched_graph, labels in test_dataloader:
-        batched_graph.to(device)
-        pred = model(batched_graph, batched_graph.ndata["attr"].float())
-        num_correct += (pred.argmax(1) == labels).sum().item()
-        num_tests += len(labels)
+        graph = batched_graph.to(device)
+        lbl = labels.to(device)
+
+        pred = model(graph, graph.ndata["attr"].float())
+        num_correct += (pred.argmax(1) == lbl).sum().item()
+        num_tests += len(lbl)
 
     print("Test accuracy:", num_correct / num_tests)
