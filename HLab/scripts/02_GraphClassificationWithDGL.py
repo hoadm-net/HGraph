@@ -81,6 +81,7 @@ if __name__ == '__main__':
     num_correct = 0
     num_tests = 0
     for batched_graph, labels in test_dataloader:
+        batched_graph.to(device)
         pred = model(batched_graph, batched_graph.ndata["attr"].float())
         num_correct += (pred.argmax(1) == labels).sum().item()
         num_tests += len(labels)
