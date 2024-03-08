@@ -12,6 +12,49 @@ import torch.nn as nn
 from dgl.nn import GraphConv
 import torch.nn.functional as F
 import scipy.sparse as sp
+from scipy.sparse import coo_matrix
+
+
+def normalize(adj):
+    """ normalize adjacency matrix with normalization-trick that is faithful to
+    the original paper.
+
+    Arguments:
+        a (scipy.sparse.coo_matrix): Unnormalied adjacency matrix
+
+    Returns:
+        scipy.sparse.coo_matrix: Normalized adjacency matrix
+    """
+    # no need to add identity matrix because self connection has already been added
+    # a += sp.eye(a.shape[0])
+    rowsum = np.array(adj.sum(1))
+    d_inv_sqrt = np.power(rowsum, -0.5).flatten()
+    d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
+    # ~D in the GCN paper
+    d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
+    return d_mat_inv_sqrt.dot(adj).dot(d_mat_inv_sqrt)
+
+
+
+def normalize_pygcn(adj):
+    """ normalize adjacency matrix with normalization-trick. This variant
+    is proposed in https://github.com/tkipf/pygcn .
+    Refer https://github.com/tkipf/pygcn/issues/11 for the author's comment.
+
+    Arguments:
+        a (scipy.sparse.coo_matrix): Unnormalied adjacency matrix
+
+    Returns:
+        scipy.sparse.coo_matrix: Normalized adjacency matrix
+    """
+    # no need to add identity matrix because self connection has already been added
+    # a += sp.eye(a.shape[0])
+    rowsum = np.array(adj.sum(1))
+    rowsum_inv = np.power(rowsum, -1).flatten()
+    rowsum_inv[np.isinf(rowsum_inv)] = 0.
+    # ~D in the GCN paper
+    d_tilde = sp.diags(rowsum_inv)
+    return d_tilde.dot(adj)
 
 
 if __name__ == '__main__':
@@ -68,6 +111,10 @@ if __name__ == '__main__':
         (edge_features, (np.array(edges_src), edges_dst)), 
         shape=(num_nodes, num_nodes)
     )
-    print(weighted_matrix)
+    I = coo_matrix(np.eye(num_nodes))
 
-    features = torch.parse(np.array(weighted_matrix.todense()))
+    weighted_matrix = weighted_matrix + I
+    
+
+
+
