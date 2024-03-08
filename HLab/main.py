@@ -13,17 +13,19 @@ from dgl.nn import GraphConv
 import torch.nn.functional as F
 import scipy.sparse as sp
 from scipy.sparse import coo_matrix
-
+import torch.nn as nn
 
 class GCN(nn.Module):
     def __init__(self, in_feats, h_feats, num_classes):
         super(GCN, self).__init__()
         self.conv1 = GraphConv(in_feats, h_feats)
         self.conv2 = GraphConv(h_feats, num_classes)
+        self.dropout = nn.Dropout(p=0.5)
 
     def forward(self, g, in_feat):
         h = self.conv1(g, in_feat)
         h = F.relu(h)
+        h = self.dropout(h)
         h = self.conv2(g, h)
         return h
 
@@ -81,13 +83,13 @@ def train(g, model):
     train_mask = g.ndata["train_mask"]
     val_mask = g.ndata["val_mask"]
     test_mask = g.ndata["test_mask"]
-    for e in range(100):
+    for e in range(200):
         # Forward
         logits = model(g, features)
 
         # Compute prediction
         pred = logits.argmax(1)
-
+        print(pred)
         # Compute loss
         # Note that you should only compute the losses of the nodes in the training set.
         loss = F.cross_entropy(logits[train_mask], labels[train_mask])
@@ -115,7 +117,7 @@ def train(g, model):
 if __name__ == '__main__':
     data, labels = fetch_20newsgroups(
         data_home=Util.get_data_path('20newsgroups'),
-        subset='test',
+        subset='all',
         return_X_y=True
     )
 
@@ -170,16 +172,23 @@ if __name__ == '__main__':
     graph = dgl.add_self_loop(graph) # + eye matrix
     graph.ndata["labels"] = torch.from_numpy(np.array(labels))
 
-    weighted_matrix = sp.csr_matrix(
+    weighted_matrix = sp.coo_matrix(
         (edge_features, (np.array(edges_src), edges_dst)), 
         shape=(num_nodes, num_nodes)
     )
-    I = sp.identity(num_nodes)
+    I = sp.identity(num_nodes, format='coo')
 
     weighted_matrix = weighted_matrix + I
-
+    weighted_matrix = weighted_matrix
     adj = normalize(weighted_matrix)
-    graph.ndata["features"] =  torch.sparse_csr_tensor(adj)
+    adj = adj.tocoo()
+    
+    values = adj.data
+    indices = np.vstack((adj.row, adj.col))
+    i = torch.LongTensor(indices)
+    v = torch.FloatTensor(values)
+    shape = adj.shape
+    graph.ndata["features"] = torch.sparse_coo_tensor(i, v, torch.Size(shape)).to_dense()
  
     node_indices = [i for i in range(num_nodes)]
 
@@ -200,3 +209,5 @@ if __name__ == '__main__':
 
     num_classes = len(set(labels)) + 1
     model = GCN(graph.ndata["features"].shape[1], 200, num_classes)
+    train(graph, model)
+    
