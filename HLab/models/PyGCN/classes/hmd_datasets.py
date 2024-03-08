@@ -53,16 +53,16 @@ class CoraDataset(DGLDataset):
         # build symmetric adjacency matrix
         # đồ thị có hướng -> vô hướng 
         # adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
-        g = dgl.from_scipy(adj)
-        g = dgl.add_reverse_edges(g) # chuyển về đồ thị vô hướng
-        self.g = dgl.add_self_loop(g) # + eye matrix
+        self.g = dgl.from_scipy(adj)
+        self.g = dgl.add_reverse_edges(self.g) # chuyển về đồ thị vô hướng
+        self.g = dgl.add_self_loop(self.g) # + eye matrix
 
         features = normalize(features)
 
         self.g.ndata["feat"] = th.FloatTensor(np.array(features.todense()))
         self.g.ndata["label"] = th.LongTensor(np.where(labels)[1])
 
-        n_nodes = g.num_nodes()
+        n_nodes = self.g.num_nodes()
         n_train = int(n_nodes * 0.6)
         n_val = int(n_nodes * 0.2)
         train_mask = th.zeros(n_nodes, dtype=th.bool)

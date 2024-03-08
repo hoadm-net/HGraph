@@ -2,8 +2,7 @@ from .hmd_string_handler import StringHandler
 
 
 class StringPreprocessing(object):
-    def __init__(self, request: str) -> None:
-        self._request = request
+    def __init__(self) -> None:
         self._handlers = []
     
     def add_handler(self, handler: StringHandler) -> None:
@@ -12,5 +11,5 @@ class StringPreprocessing(object):
             
         self._handlers.append(handler)
 
-    def execute(self) -> str:
-        return self._handlers[0].handle(self._request)
+    def execute(self, request: str) -> str:
+        return self._handlers[0].handle(request)

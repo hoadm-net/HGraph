@@ -1,11 +1,7 @@
 import os
 os.environ["DGLBACKEND"] = "pytorch"
-
 import torch.nn.functional as F
-from dgl import save_graphs, load_graphs
-from dgl.data.utils import save_info, load_info
 from classes import *
-from HLab.hmd import Utilities as Util
 
 
 def train(g, model):
@@ -21,7 +17,6 @@ def train(g, model):
     for e in range(100):
         # Forward
         logits = model(g, features)
-
         # Compute prediction
         pred = logits.argmax(1)
 
@@ -30,7 +25,7 @@ def train(g, model):
         loss = F.cross_entropy(logits[train_mask], labels[train_mask])
 
         # Compute accuracy on training/validation/test
-        train_acc = (pred[train_mask] == labels[train_mask]).float().mean()
+        # train_acc = (pred[train_mask] == labels[train_mask]).float().mean()
         val_acc = (pred[val_mask] == labels[val_mask]).float().mean()
         test_acc = (pred[test_mask] == labels[test_mask]).float().mean()
 
@@ -51,12 +46,11 @@ def train(g, model):
 
 
 if __name__ == '__main__':
-    # dataset = CoraDataset()
-    
-    # g = dataset[0]
-   
+    dataset = CoraDataset()
+    graph = dataset[0]
     
     # Util.save_graph('cora', g, g.ndata['label'], {'num_classes': dataset.num_classes})
-    graph, labels, info = Util.load_graph('cora')
-    model = GCN(graph.ndata["feat"].shape[1], 16, info['num_classes'])
+    # graph, labels, info = Util.load_graph('cora')
+
+    model = GCN(graph.ndata["feat"].shape[1], 16, dataset.num_classes)
     train(graph, model)
