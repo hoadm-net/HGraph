@@ -179,7 +179,7 @@ if __name__ == '__main__':
     weighted_matrix = weighted_matrix + I
 
     adj = normalize(weighted_matrix)
-    graph.ndata["features"] =  torch.sparse_csc_tensor(adj)
+    graph.ndata["features"] =  torch.sparse_csr_tensor(adj)
  
     node_indices = [i for i in range(num_nodes)]
 
