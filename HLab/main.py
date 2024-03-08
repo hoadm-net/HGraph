@@ -15,6 +15,20 @@ import scipy.sparse as sp
 from scipy.sparse import coo_matrix
 
 
+class GCN(nn.Module):
+    def __init__(self, in_feats, h_feats, num_classes):
+        super(GCN, self).__init__()
+        self.conv1 = GraphConv(in_feats, h_feats)
+        self.conv2 = GraphConv(h_feats, num_classes)
+
+    def forward(self, g, in_feat):
+        h = self.conv1(g, in_feat)
+        h = F.relu(h)
+        h = self.conv2(g, h)
+        return h
+
+
+
 def normalize(adj):
     """ normalize adjacency matrix with normalization-trick that is faithful to
     the original paper.
@@ -56,6 +70,47 @@ def normalize_pygcn(adj):
     d_tilde = sp.diags(rowsum_inv)
     return d_tilde.dot(adj)
 
+
+def train(g, model):
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.02)
+    best_val_acc = 0
+    best_test_acc = 0
+
+    features = g.ndata["features"]
+    labels = g.ndata["labels"]
+    train_mask = g.ndata["train_mask"]
+    val_mask = g.ndata["val_mask"]
+    test_mask = g.ndata["test_mask"]
+    for e in range(100):
+        # Forward
+        logits = model(g, features)
+
+        # Compute prediction
+        pred = logits.argmax(1)
+
+        # Compute loss
+        # Note that you should only compute the losses of the nodes in the training set.
+        loss = F.cross_entropy(logits[train_mask], labels[train_mask])
+
+        # Compute accuracy on training/validation/test
+        train_acc = (pred[train_mask] == labels[train_mask]).float().mean()
+        val_acc = (pred[val_mask] == labels[val_mask]).float().mean()
+        test_acc = (pred[test_mask] == labels[test_mask]).float().mean()
+
+        # Save the best validation accuracy and the corresponding test accuracy.
+        if best_val_acc < val_acc:
+            best_val_acc = val_acc
+            best_test_acc = test_acc
+
+        # Backward
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        if e % 5 == 0:
+            print(
+                f"In epoch {e}, loss: {loss:.3f}, val acc: {val_acc:.3f} (best {best_val_acc:.3f}), test acc: {test_acc:.3f} (best {best_test_acc:.3f})"
+            )
 
 if __name__ == '__main__':
     data, labels = fetch_20newsgroups(
@@ -104,8 +159,16 @@ if __name__ == '__main__':
     word_labels = [0] * word_nodes
     labels = labels + word_labels
 
-    # edges_src = torch.from_numpy(np.array(edges_src))
-    # edges_dst = torch.from_numpy(np.array(edges_dst))
+    edges_src = torch.from_numpy(np.array(edges_src))
+    edges_dst = torch.from_numpy(np.array(edges_dst))
+
+    graph = dgl.graph(
+        (edges_src, edges_dst), num_nodes=num_nodes
+    )
+
+    graph = dgl.add_reverse_edges(graph) # chuyển về đồ thị vô hướng
+    graph = dgl.add_self_loop(graph) # + eye matrix
+    graph.ndata["labels"] = torch.from_numpy(np.array(labels))
 
     weighted_matrix = sp.csr_matrix(
         (edge_features, (np.array(edges_src), edges_dst)), 
@@ -114,7 +177,23 @@ if __name__ == '__main__':
     I = coo_matrix(np.eye(num_nodes))
 
     weighted_matrix = weighted_matrix + I
-    
 
+    node_indices = [i for i in range(num_nodes)]
 
+    x_train, x_test, y_train, y_test = train_test_split(node_indices, labels, test_size=0.33, random_state=42)
+    x_test, x_val, y_test, y_val = train_test_split(x_test, y_test, test_size=0.33, random_state=42)    
 
+    train_mask = torch.zeros(num_nodes, dtype=torch.bool)
+    val_mask = torch.zeros(num_nodes, dtype=torch.bool)
+    test_mask = torch.zeros(num_nodes, dtype=torch.bool)
+
+    train_mask[x_train] = True
+    val_mask[val_mask] = True
+    test_mask[test_mask] = True
+
+    graph.ndata["train_mask"] = train_mask
+    graph.ndata["val_mask"] = val_mask
+    graph.ndata["test_mask"] = test_mask
+
+    num_classes = len(set(labels)) + 1
+    model = GCN(graph.ndata["features"].shape[1], 200, num_classes)
