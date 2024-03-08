@@ -174,10 +174,13 @@ if __name__ == '__main__':
         (edge_features, (np.array(edges_src), edges_dst)), 
         shape=(num_nodes, num_nodes)
     )
-    I = coo_matrix(np.eye(num_nodes))
+    I = sp.identity(num_nodes)
 
     weighted_matrix = weighted_matrix + I
 
+    adj = normalize(weighted_matrix)
+    graph.ndata["features"] =  torch.sparse_csc_tensor(adj)
+ 
     node_indices = [i for i in range(num_nodes)]
 
     x_train, x_test, y_train, y_test = train_test_split(node_indices, labels, test_size=0.33, random_state=42)
