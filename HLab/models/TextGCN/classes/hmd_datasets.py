@@ -34,7 +34,7 @@ class NGDataset(DGLDataset):
             return_X_y=True
         )
 
-        self.num_classes = len(set(labels))
+        self.num_classes = len(set(labels)) + 1
 
         # 1 - Preprocessing
         preprocessor = StringPreprocessing()

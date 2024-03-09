@@ -46,7 +46,7 @@ def train(g, model):
 
 
 if __name__ == '__main__':
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    device = "cuda:2" if torch.cuda.is_available() else "cpu"
     print(f"Using {device}!!!")
 
     dataset = NGDataset()
