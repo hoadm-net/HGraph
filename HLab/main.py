@@ -117,7 +117,7 @@ def train(g, model):
 if __name__ == '__main__':
     data, labels = fetch_20newsgroups(
         data_home=Util.get_data_path('20newsgroups'),
-        subset='all',
+        subset='test',
         return_X_y=True
     )
 
@@ -157,57 +157,59 @@ if __name__ == '__main__':
         edges_dst.append(w2_idx) # word_2
         edge_features.append(edge_item[2])
 
-    labels = [lbl + 1 for lbl in labels]
-    word_labels = [0] * word_nodes
-    labels = labels + word_labels
+    print(len(edges_src))
+    print(len(edges_dst))
+    print(len(edge_features))
 
-    edges_src = torch.from_numpy(np.array(edges_src))
-    edges_dst = torch.from_numpy(np.array(edges_dst))
+    # labels = [lbl + 1 for lbl in labels]
+    # word_labels = [0] * word_nodes
+    # labels = labels + word_labels
 
-    graph = dgl.graph(
-        (edges_src, edges_dst), num_nodes=num_nodes
-    )
+    # edges_src = torch.from_numpy(np.array(edges_src))
+    # edges_dst = torch.from_numpy(np.array(edges_dst))
 
-    graph = dgl.add_reverse_edges(graph) # chuyển về đồ thị vô hướng
-    graph = dgl.add_self_loop(graph) # + eye matrix
-    graph.ndata["labels"] = torch.from_numpy(np.array(labels))
+    # graph = dgl.graph(
+    #     (edges_src, edges_dst), num_nodes=num_nodes
+    # )
 
-    weighted_matrix = sp.coo_matrix(
-        (edge_features, (np.array(edges_src), edges_dst)), 
-        shape=(num_nodes, num_nodes)
-    )
-    I = sp.identity(num_nodes, format='coo')
+    # graph = dgl.add_reverse_edges(graph) # chuyển về đồ thị vô hướng
+    # graph = dgl.add_self_loop(graph) # + eye matrix
+    # graph.ndata["labels"] = torch.from_numpy(np.array(labels))
 
-    weighted_matrix = weighted_matrix + I
-    weighted_matrix = weighted_matrix
-    adj = normalize(weighted_matrix)
-    adj = adj.tocoo()
+    # weighted_matrix = sp.coo_matrix(
+    #     (edge_features, (np.array(edges_src), edges_dst)), 
+    #     shape=(num_nodes, num_nodes)
+    # )
+    # I = sp.identity(num_nodes, format='coo')
+    # weighted_matrix = weighted_matrix + I
+    # adj = normalize(weighted_matrix)
+    # adj = adj.tocoo()
     
-    values = adj.data
-    indices = np.vstack((adj.row, adj.col))
-    i = torch.LongTensor(indices)
-    v = torch.FloatTensor(values)
-    shape = adj.shape
-    graph.ndata["features"] = torch.sparse_coo_tensor(i, v, torch.Size(shape)).to_dense()
+    # values = adj.data
+    # indices = np.vstack((adj.row, adj.col))
+    # i = torch.LongTensor(indices)
+    # v = torch.FloatTensor(values)
+    # shape = adj.shape
+    # graph.ndata["features"] = torch.sparse_coo_tensor(i, v, torch.Size(shape))
  
-    node_indices = [i for i in range(num_nodes)]
+    # node_indices = [i for i in range(num_nodes)]
 
-    x_train, x_test, y_train, y_test = train_test_split(node_indices, labels, test_size=0.33, random_state=42)
-    x_test, x_val, y_test, y_val = train_test_split(x_test, y_test, test_size=0.33, random_state=42)    
+    # x_train, x_test, y_train, y_test = train_test_split(node_indices, labels, test_size=0.33, random_state=42)
+    # x_test, x_val, y_test, y_val = train_test_split(x_test, y_test, test_size=0.33, random_state=42)    
 
-    train_mask = torch.zeros(num_nodes, dtype=torch.bool)
-    val_mask = torch.zeros(num_nodes, dtype=torch.bool)
-    test_mask = torch.zeros(num_nodes, dtype=torch.bool)
+    # train_mask = torch.zeros(num_nodes, dtype=torch.bool)
+    # val_mask = torch.zeros(num_nodes, dtype=torch.bool)
+    # test_mask = torch.zeros(num_nodes, dtype=torch.bool)
 
-    train_mask[x_train] = True
-    val_mask[val_mask] = True
-    test_mask[test_mask] = True
+    # train_mask[x_train] = True
+    # val_mask[val_mask] = True
+    # test_mask[test_mask] = True
 
-    graph.ndata["train_mask"] = train_mask
-    graph.ndata["val_mask"] = val_mask
-    graph.ndata["test_mask"] = test_mask
+    # graph.ndata["train_mask"] = train_mask
+    # graph.ndata["val_mask"] = val_mask
+    # graph.ndata["test_mask"] = test_mask
 
-    num_classes = len(set(labels)) + 1
-    model = GCN(graph.ndata["features"].shape[1], 200, num_classes)
-    train(graph, model)
+    # num_classes = len(set(labels)) + 1
+    # model = GCN(graph.ndata["features"].shape[1], 200, num_classes)
+    # train(graph, model)
     

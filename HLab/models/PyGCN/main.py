@@ -48,9 +48,11 @@ def train(g, model):
 if __name__ == '__main__':
     dataset = CoraDataset()
     graph = dataset[0]
-    
-    # Util.save_graph('cora', g, g.ndata['label'], {'num_classes': dataset.num_classes})
-    # graph, labels, info = Util.load_graph('cora')
 
-    model = GCN(graph.ndata["feat"].shape[1], 16, dataset.num_classes)
-    train(graph, model)
+    print(graph.ndata["label"])
+    
+    # # Util.save_graph('cora', g, g.ndata['label'], {'num_classes': dataset.num_classes})
+    # # graph, labels, info = Util.load_graph('cora')
+
+    # model = GCN(graph.ndata["feat"].shape[1], 16, dataset.num_classes)
+    # train(graph, model)
