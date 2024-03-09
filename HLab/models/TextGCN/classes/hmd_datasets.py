@@ -16,7 +16,7 @@ class NGDataset(DGLDataset):
         super().__init__(name='20 Newsgroups')
 
     def __getitem__(self, idx):
-        return self.graph
+        return self.g
     
     def __len__(self):
         return 1
@@ -111,6 +111,6 @@ class NGDataset(DGLDataset):
         val_mask[x_val] = True
         test_mask[x_test] = True
 
-        g.ndata['train_mask'] = train_mask
-        g.ndata['val_mask'] = val_mask
-        g.ndata['test_mask'] = test_mask
+        self.g.ndata['train_mask'] = train_mask
+        self.g.ndata['val_mask'] = val_mask
+        self.g.ndata['test_mask'] = test_mask
