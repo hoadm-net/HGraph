@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-from classes import NGDataset, TextGCN
+from classes import NGDataset, TextGCN, UIT_VSFCDataset
 
 
 def train(g, model):
@@ -49,10 +49,9 @@ if __name__ == '__main__':
     device = "cuda:2" if torch.cuda.is_available() else "cpu"
     print(f"Using {device}!!!")
 
-    dataset = NGDataset()
+    dataset = UIT_VSFCDataset()
     g = dataset[0].to(device)
     num_classes = dataset.num_classes
 
     model = TextGCN(g.ndata["features"].shape[1], 200, num_classes).to(device)
     train(g, model)
-    
